@@ -50,7 +50,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test:db": "node --test supabase/tests/"
+    "test:db": "node --test supabase/tests/*.test.mjs"
   },
   "private": true
 }
