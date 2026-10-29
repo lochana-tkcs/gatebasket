@@ -39,7 +39,8 @@ src/components/     Shared UI
 src/lib/            Supabase client, auth, cart, queries, theme (brand colours live in theme.ts)
 supabase/
   migrations/       Schema, RLS and RPCs
-  seed.sql          Demo society (code GREEN1), flats, store and 30 products
+  seed.sql          Demo society (code GREEN1), flats, store and 30 products with photos
+  seed-images/      Demo product photos from Wikimedia Commons (see CREDITS.md)
   functions/        notify-order push notification edge function
   tests/            Database tests (run on PGlite, no Docker needed)
 ```

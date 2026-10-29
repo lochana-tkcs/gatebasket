@@ -50,3 +50,35 @@ insert into public.products (store_id, category_id, name, unit, price, mrp, stoc
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000c5', 'Detergent Powder', '1 kg', 110, 125, null),
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000c5', 'Toilet Cleaner', '500 ml', 95, 105, null),
   ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000c5', 'Garbage Bags', '30 pcs', 85, 99, null);
+
+-- Demo product photos (credits: supabase/seed-images/CREDITS.md)
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/full-cream-milk.jpg' where name = 'Full Cream Milk';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/curd.jpg' where name = 'Curd';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/butter.jpg' where name = 'Butter';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/brown-bread.jpg' where name = 'Brown Bread';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/eggs.jpg' where name = 'Eggs';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/onion.jpg' where name = 'Onion';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/paneer.jpg' where name = 'Paneer';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/wheat-atta.jpg' where name = 'Wheat Atta';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/tea-powder.jpg' where name = 'Tea Powder';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/cola.jpg' where name = 'Cola';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/tomato.jpg' where name = 'Tomato';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/banana.jpg' where name = 'Banana';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/coriander.jpg' where name = 'Coriander';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/green-chilli.jpg' where name = 'Green Chilli';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/basmati-rice.jpg' where name = 'Basmati Rice';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/toor-dal.jpg' where name = 'Toor Dal';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/sugar.jpg' where name = 'Sugar';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/salt.jpg' where name = 'Salt';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/sunflower-oil.jpg' where name = 'Sunflower Oil';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/potato-chips.jpg' where name = 'Potato Chips';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/glucose-biscuits.jpg' where name = 'Glucose Biscuits';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/dark-chocolate.jpg' where name = 'Dark Chocolate';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/detergent-powder.jpg' where name = 'Detergent Powder';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/toilet-cleaner.jpg' where name = 'Toilet Cleaner';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/toned-milk.jpg' where name = 'Toned Milk';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/instant-noodles.jpg' where name = 'Instant Noodles';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/mineral-water.jpg' where name = 'Mineral Water';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/dishwash-bar.jpg' where name = 'Dishwash Bar';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/garbage-bags.jpg' where name = 'Garbage Bags';
+update public.products set image_url = 'https://raw.githubusercontent.com/lochana-tkcs/gatebasket/master/supabase/seed-images/potato.jpg' where name = 'Potato';
