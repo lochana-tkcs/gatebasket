@@ -24,13 +24,23 @@ Built with **Expo (React Native)** and **Supabase**.
 
 **Backend**
 - Postgres row-level security: residents only see their own society's store and their own orders, and owners only see their own store
-- `place_order` runs as one transaction. It checks that the store is open, checks stock, saves the prices at order time, decrements tracked stock and enforces the minimum order
-- Order status changes go through `update_order_status`, which only allows valid transitions. Cancelled and rejected orders are restocked
-- Retrying a checkout can't create a duplicate order: the app sends a unique checkout id and the server returns the existing order on a repeat
-- Products are locked in a fixed order, so two carts with the same items queue instead of deadlocking
-- Orders the store doesn't accept within 15 minutes are cancelled automatically and restocked (`expire_stale_orders`, run every minute by `pg_cron`)
-- Stock changes stream live to residents, and an owner's manual "out of stock" switch is never overridden by restocking
-- Realtime order updates, and push notifications through an edge function
+- Realtime order and stock updates, and push notifications through an edge function
+
+## Design decisions
+
+Orders and stock are kept consistent even when two people want the last packet. The full write-up, with examples, is in [`docs/design-decisions.md`](docs/design-decisions.md). In short:
+
+- **One source of truth:** stock and orders live only in Postgres. The cart is on the phone and reserves nothing. Offline, ordering fails instead of queueing (consistency over availability).
+- **Server-only writes:** the app can't edit orders directly. Every change goes through a database function (`place_order`, `cancel_order`, `update_order_status`, …).
+- **One transaction per order:** stock check, stock decrement, order and items are saved together or not at all.
+- **Row locks:** `place_order` locks each product row while checking it, so two checkouts for the last unit are served one at a time. Locks are taken in product-id order to avoid deadlocks, and last only milliseconds.
+- **Server-side prices:** the app sends product ids and quantities; the server computes totals and snapshots each item's price.
+- **Availability rule:** `in_stock` is the owner's switch; a product is orderable when it's on and has stock left (or isn't counted).
+- **Status state machine:** only valid transitions are allowed, and the order row is locked so Cancel and Accept can't both win.
+- **Expiring reservation:** orders the store doesn't accept within 15 minutes are cancelled and restocked by `expire_stale_orders` (`pg_cron`, every minute).
+- **Restock exactly once:** cancel, reject and timeout add stock back in the same transaction, without overriding a manual out-of-stock.
+- **Idempotent checkout:** each checkout sends a unique id, so a retry after a lost reply returns the same order instead of a duplicate.
+- **Live but verified:** Realtime events trigger a re-fetch, and checkout always re-checks live stock under the lock.
 
 ## Project layout
 
@@ -47,6 +57,8 @@ supabase/
   seed-images/      Demo product photos from Wikimedia Commons (see CREDITS.md)
   functions/        notify-order push notification edge function
   tests/            Database tests (run on PGlite, no Docker needed)
+docs/
+  design-decisions.md   How orders and stock stay consistent
 ```
 
 ## Setup
@@ -104,7 +116,10 @@ npx expo lint
 ```
 
 ## Roadmap
-- Online UPI payments (Razorpay) and platform commission
+- "Not delivered" step for the store that closes the order and restocks it
+- Offer "remove unavailable items and place the rest" at checkout
+- Back-in-stock notifications
+- Online UPI payments (Razorpay) with an expiring "awaiting payment" reservation, and platform commission
 - More than one store per society
 - Visitor pre-approval and guard app
 - Bulk catalog import from a CSV file or barcodes
