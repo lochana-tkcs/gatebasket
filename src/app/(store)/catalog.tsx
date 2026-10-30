@@ -9,7 +9,7 @@ import { EmptyState, Loading, Row, Txt } from '@/components/ui';
 import { rupees } from '@/lib/format';
 import { useCatalog, useMyStore } from '@/lib/queries';
 import { errorMessage, supabase } from '@/lib/supabase';
-import { Colors, Radius, Shadow, Spacing } from '@/lib/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing } from '@/lib/theme';
 import type { Product } from '@/lib/types';
 
 export default function CatalogScreen() {
@@ -71,7 +71,7 @@ export default function CatalogScreen() {
             style={[styles.row, !item.in_stock && { opacity: 0.6 }]}>
             <ProductImage uri={item.image_url} size={48} />
             <View style={{ flex: 1 }}>
-              <Txt numberOfLines={1} style={{ fontWeight: '600' }}>
+              <Txt numberOfLines={1} style={{ fontFamily: Fonts.medium }}>
                 {item.name}
               </Txt>
               <Txt variant="caption">
@@ -96,7 +96,7 @@ export default function CatalogScreen() {
       <Pressable style={styles.fab} onPress={() => router.push('/product-edit')}>
         <Row style={{ gap: 6 }}>
           <Ionicons name="add" size={22} color="#fff" />
-          <Txt color="#fff" style={{ fontWeight: '700' }}>
+          <Txt color="#fff" style={{ fontFamily: Fonts.medium }}>
             Add product
           </Txt>
         </Row>

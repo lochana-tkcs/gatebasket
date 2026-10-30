@@ -10,7 +10,7 @@ Built with **Expo (React Native)** and **Supabase**.
 
 **Residents**
 - Phone OTP login, and joining a society with a code and choosing block and flat
-- MyGate-style home screen: flat and society header, quick actions, community store banner and an updates feed
+- MyGate-style design: gradient header with Activity · Store · Apartment tabs, activity-feed order cards, colourful icon tiles and the Ubuntu font
 - Browse the store by category, search, and add to cart with quantity steppers (out-of-stock items are greyed out)
 - Checkout with a delivery note and cash/UPI on delivery
 - Live order tracking (placed → accepted → packed → out for delivery → delivered), cancelling before the store accepts, and reordering
@@ -32,7 +32,7 @@ Built with **Expo (React Native)** and **Supabase**.
 
 ```
 src/app/            Expo Router screens
-  (resident)/       Home · Store · Orders · Profile tabs
+  (resident)/       Activity · Store · Apartment tabs (profile via the gear icon)
   (store)/          Orders · Catalog · Settings tabs (store owner)
   cart.tsx, order/[id].tsx, product-edit.tsx, login.tsx, onboarding.tsx
 src/components/     Shared UI

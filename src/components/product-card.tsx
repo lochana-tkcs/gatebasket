@@ -3,10 +3,10 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { rupees } from '@/lib/format';
-import { Colors, Radius, Shadow, Spacing } from '@/lib/theme';
+import { Colors, Fonts, Radius, Shadow, Spacing } from '@/lib/theme';
 import type { Product } from '@/lib/types';
 
-import { Txt } from './ui';
+import { Gradient, Txt } from './ui';
 
 export function QtyStepper({ qty, onChange, max }: { qty: number; onChange: (qty: number) => void; max?: number | null }) {
   if (qty === 0) {
@@ -18,7 +18,7 @@ export function QtyStepper({ qty, onChange, max }: { qty: number; onChange: (qty
   }
   const atMax = max != null && qty >= max;
   return (
-    <View style={styles.stepper}>
+    <Gradient style={styles.stepper}>
       <Pressable hitSlop={8} onPress={() => onChange(qty - 1)}>
         <Ionicons name="remove" size={18} color="#fff" />
       </Pressable>
@@ -26,7 +26,7 @@ export function QtyStepper({ qty, onChange, max }: { qty: number; onChange: (qty
       <Pressable hitSlop={8} disabled={atMax} onPress={() => onChange(qty + 1)} style={atMax && { opacity: 0.4 }}>
         <Ionicons name="add" size={18} color="#fff" />
       </Pressable>
-    </View>
+    </Gradient>
   );
 }
 
@@ -102,16 +102,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.blue,
     borderRadius: Radius.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  discountText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-  name: { fontWeight: '600', minHeight: 40 },
+  discountText: { color: '#fff', fontSize: 10, fontFamily: Fonts.bold },
+  name: { fontFamily: Fonts.medium, minHeight: 40 },
   footer: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 'auto' },
-  price: { fontSize: 15, fontWeight: '700', color: Colors.text },
-  mrp: { fontSize: 12, color: Colors.textMuted, textDecorationLine: 'line-through' },
+  price: { fontSize: 16, fontFamily: Fonts.medium, color: Colors.text },
+  mrp: { fontSize: 12, fontFamily: Fonts.regular, color: Colors.textMuted, textDecorationLine: 'line-through' },
   add: {
     borderWidth: 1.5,
     borderColor: Colors.primary,
@@ -120,15 +120,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: Colors.primarySoft,
   },
-  addText: { color: Colors.primary, fontWeight: '800', fontSize: 13 },
+  addText: { color: Colors.primary, fontFamily: Fonts.bold, fontSize: 13, letterSpacing: 1 },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.primary,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
   },
-  stepperQty: { color: '#fff', fontWeight: '800', minWidth: 16, textAlign: 'center' },
+  stepperQty: { color: '#fff', fontFamily: Fonts.bold, minWidth: 16, textAlign: 'center' },
 });

@@ -1,164 +1,112 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, RefreshControl, ScrollView, View } from 'react-native';
 
 import { OrderCard } from '@/components/order-bits';
-import { Card, Row, Txt, type IconName } from '@/components/ui';
-import { useProfile } from '@/lib/auth';
-import { flatLabel } from '@/lib/format';
+import { Card, CardActions, IconCircle, Loading, MetaRow, Pill, Row, SectionHeader, Txt } from '@/components/ui';
+import { cartSummary, useCart } from '@/lib/cart';
 import { useMyStore, useOrders, useOrdersRealtime } from '@/lib/queries';
-import { Colors, Radius, Spacing } from '@/lib/theme';
+import { useReorder } from '@/lib/reorder';
+import { supabase } from '@/lib/supabase';
+import { Colors, Spacing } from '@/lib/theme';
+import type { OrderWithDetails } from '@/lib/types';
 
-const QUICK_ACTIONS: { label: string; icon: IconName; ready?: boolean }[] = [
-  { label: 'Store', icon: 'storefront', ready: true },
-  { label: 'Visitors', icon: 'people' },
-  { label: 'Daily Help', icon: 'person-add' },
-  { label: 'Helpdesk', icon: 'construct' },
-  { label: 'Notices', icon: 'megaphone' },
-];
-
-export default function HomeScreen() {
-  const profile = useProfile();
+/** Activity feed: the store, live orders, then past orders. */
+export default function ActivityScreen() {
   const store = useMyStore();
   const active = useOrders({ active: true });
-  const recent = useOrders({ active: false, limit: 3 });
+  const past = useOrders({ active: false, limit: 20 });
+  const cart = cartSummary(useCart((s) => s.lines));
+  const { reorder } = useReorder();
   useOrdersRealtime();
 
-  const refreshing = store.isRefetching || active.isRefetching || recent.isRefetching;
+  if (active.isLoading || past.isLoading) return <Loading />;
+
   const refresh = () => {
     store.refetch();
     active.refetch();
-    recent.refetch();
+    past.refetch();
   };
 
+  const cancel = (o: OrderWithDetails) =>
+    Alert.alert('Cancel this order?', undefined, [
+      { text: 'Keep order', style: 'cancel' },
+      {
+        text: 'Cancel order',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await supabase.rpc('cancel_order', { p_order: o.id });
+          if (error) Alert.alert('Could not cancel', error.message);
+          active.refetch();
+          past.refetch();
+        },
+      },
+    ]);
+
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: Colors.primary }}>
-      <ScrollView
-        style={{ backgroundColor: Colors.background }}
-        contentContainerStyle={{ paddingBottom: Spacing.xxl }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
-        {/* Header: flat + society, like a gate app */}
-        <View style={styles.header}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <View style={{ flex: 1 }}>
-              <Txt variant="title" color="#fff">
-                {flatLabel(profile.flat)}
-              </Txt>
-              <Row style={{ gap: 4 }}>
-                <Ionicons name="location" size={14} color="#D6F2EE" />
-                <Txt color="#D6F2EE">{profile.society?.name}</Txt>
-              </Row>
+    <ScrollView
+      contentContainerStyle={{ padding: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.xxl }}
+      refreshControl={<RefreshControl refreshing={active.isRefetching || past.isRefetching} onRefresh={refresh} />}>
+      {store.data && (
+        <Card style={{ gap: Spacing.sm }}>
+          <Row style={{ gap: Spacing.md, alignItems: 'flex-start' }}>
+            <IconCircle icon="storefront" tint="red" size={44} />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Txt variant="heading">{store.data.name}</Txt>
+              <Pill
+                label={store.data.is_open ? 'Open now' : 'Closed'}
+                color="#fff"
+                bg={store.data.is_open ? Colors.green : Colors.textMuted}
+              />
             </View>
-            <Pressable hitSlop={10} onPress={() => Alert.alert('Notifications', 'Order updates arrive as push notifications.')}>
-              <Ionicons name="notifications-outline" size={26} color="#fff" />
-            </Pressable>
           </Row>
-          <Txt color="#fff" style={{ marginTop: Spacing.md }}>
-            Hi {profile.name?.split(' ')[0]} 👋
-          </Txt>
-        </View>
+          <View style={{ gap: 6 }}>
+            <MetaRow icon="flash-outline">Delivered to your door in minutes</MetaRow>
+            <MetaRow icon="time-outline">{store.data.opening_hours}</MetaRow>
+          </View>
+          <CardActions
+            actions={[
+              { label: 'Shop now', icon: 'basket-outline', tone: 'primary', onPress: () => router.push('/store') },
+              {
+                label: cart.count > 0 ? `Cart (${cart.count})` : 'Cart',
+                icon: 'cart-outline',
+                onPress: () => router.push(cart.count > 0 ? '/cart' : '/store'),
+              },
+            ]}
+          />
+        </Card>
+      )}
 
-        <View style={styles.body}>
-          {/* Quick actions */}
-          <Card style={styles.quick}>
-            {QUICK_ACTIONS.map((a) => (
-              <Pressable
-                key={a.label}
-                style={styles.quickItem}
-                onPress={() =>
-                  a.ready ? router.push('/store') : Alert.alert(a.label, 'Coming soon to GateBasket.')
-                }>
-                <View style={[styles.quickIcon, !a.ready && { backgroundColor: Colors.background }]}>
-                  <Ionicons name={a.icon} size={22} color={a.ready ? Colors.primary : Colors.textMuted} />
-                </View>
-                <Txt variant="caption" color={a.ready ? Colors.text : Colors.textMuted} style={{ textAlign: 'center' }}>
-                  {a.label}
-                </Txt>
-                {!a.ready && <Txt variant="caption" style={styles.soon}>Soon</Txt>}
-              </Pressable>
-            ))}
-          </Card>
+      {!!active.data?.length && <SectionHeader title="Live orders" />}
+      {active.data?.map((o) => (
+        <OrderCard
+          key={o.id}
+          order={o}
+          actions={[
+            { label: 'Track', icon: 'navigate-outline', tone: 'primary', onPress: () => router.push(`/order/${o.id}`) },
+            ...(o.status === 'placed'
+              ? [{ label: 'Cancel', icon: 'close-circle-outline' as const, onPress: () => cancel(o) }]
+              : []),
+          ]}
+        />
+      ))}
 
-          {/* Community store banner */}
-          <Pressable onPress={() => router.push('/store')}>
-            <View style={styles.banner}>
-              <View style={{ flex: 1, gap: 4 }}>
-                <Txt variant="label" color={Colors.primaryDark}>
-                  COMMUNITY STORE
-                </Txt>
-                <Txt variant="heading">{store.data?.name ?? 'Your society store'}</Txt>
-                <Txt color={Colors.textSecondary}>Delivered to your door in minutes</Txt>
-                {store.data && (
-                  <Row style={{ gap: 6, marginTop: 4 }}>
-                    <View
-                      style={[styles.dot, { backgroundColor: store.data.is_open ? Colors.success : Colors.danger }]}
-                    />
-                    <Txt variant="caption" color={store.data.is_open ? Colors.success : Colors.danger}>
-                      {store.data.is_open ? `Open · ${store.data.opening_hours}` : 'Closed now'}
-                    </Txt>
-                  </Row>
-                )}
-              </View>
-              <View style={styles.bannerIcon}>
-                <Ionicons name="basket" size={36} color="#fff" />
-              </View>
-            </View>
-          </Pressable>
-
-          {/* Updates feed */}
-          <Txt variant="heading" style={{ marginTop: Spacing.sm }}>
-            Updates
-          </Txt>
-          {active.data?.map((o) => <OrderCard key={o.id} order={o} />)}
-          {recent.data?.map((o) => <OrderCard key={o.id} order={o} />)}
-          {!active.data?.length && !recent.data?.length && (
-            <Card>
-              <Txt color={Colors.textSecondary}>No updates yet. Your order updates will show up here.</Txt>
-            </Card>
-          )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <SectionHeader title="Past orders" />
+      {past.data?.length ? (
+        past.data.map((o) => (
+          <OrderCard
+            key={o.id}
+            order={o}
+            actions={[
+              { label: 'Details', icon: 'document-text-outline', onPress: () => router.push(`/order/${o.id}`) },
+              { label: 'Reorder', icon: 'refresh', tone: 'primary', onPress: () => reorder(o) },
+            ]}
+          />
+        ))
+      ) : (
+        <Card>
+          <Txt color={Colors.textSecondary}>No orders yet. Your orders and their updates will show up here.</Txt>
+        </Card>
+      )}
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl + Spacing.xl,
-  },
-  body: { paddingHorizontal: Spacing.lg, gap: Spacing.lg, marginTop: -Spacing.xxl },
-  quick: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: Spacing.sm },
-  quickItem: { alignItems: 'center', gap: 6, flex: 1 },
-  quickIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  soon: { fontSize: 9, color: Colors.accent, fontWeight: '700', marginTop: -4 },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.accentSoft,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    borderColor: '#F7D9A6',
-  },
-  bannerIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-});

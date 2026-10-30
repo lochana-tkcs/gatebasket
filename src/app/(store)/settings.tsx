@@ -6,7 +6,7 @@ import { Button, Card, EmptyState, Field, Loading, Row, Txt } from '@/components
 import { useAuth } from '@/lib/auth';
 import { useMyStore } from '@/lib/queries';
 import { errorMessage, supabase } from '@/lib/supabase';
-import { Colors, Spacing } from '@/lib/theme';
+import { Colors, Fonts, Spacing } from '@/lib/theme';
 import type { Store } from '@/lib/types';
 
 export default function StoreSettingsScreen() {
@@ -93,7 +93,7 @@ function StoreSettingsForm({ store: s }: { store: Store }) {
 
       <Card style={{ gap: 2 }}>
         <Txt variant="caption">Signed in as</Txt>
-        <Txt style={{ fontWeight: '600' }}>{profile?.phone ? `+${profile.phone}` : profile?.name}</Txt>
+        <Txt style={{ fontFamily: Fonts.medium }}>{profile?.phone ? `+${profile.phone}` : profile?.name}</Txt>
       </Card>
       <Button title="Sign out" variant="danger" icon="log-out-outline" onPress={signOut} />
     </ScrollView>

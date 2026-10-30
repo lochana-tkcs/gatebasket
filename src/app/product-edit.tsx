@@ -9,7 +9,7 @@ import { ProductImage } from '@/components/product-card';
 import { Button, Chip, Field, Loading, Row, Txt } from '@/components/ui';
 import { useCatalog, useMyStore } from '@/lib/queries';
 import { errorMessage, supabase } from '@/lib/supabase';
-import { Colors, Spacing } from '@/lib/theme';
+import { Colors, Fonts, Spacing } from '@/lib/theme';
 import type { Category, Product } from '@/lib/types';
 
 export default function ProductEditScreen() {
@@ -119,7 +119,7 @@ function ProductForm({
         <ProductImage uri={pickedImage?.uri ?? imageUrl} size={120} />
         <Row style={{ gap: 4 }}>
           <Ionicons name="camera-outline" size={16} color={Colors.primary} />
-          <Txt color={Colors.primary} style={{ fontWeight: '600' }}>
+          <Txt color={Colors.primary} style={{ fontFamily: Fonts.medium }}>
             {pickedImage || imageUrl ? 'Change photo' : 'Add photo'}
           </Txt>
         </Row>
@@ -151,7 +151,7 @@ function ProductForm({
         placeholder="Leave empty if you don't count stock"
       />
       <Row style={{ justifyContent: 'space-between' }}>
-        <Txt style={{ fontWeight: '600' }}>In stock</Txt>
+        <Txt style={{ fontFamily: Fonts.medium }}>In stock</Txt>
         <Switch value={inStock} onValueChange={setInStock} trackColor={{ true: Colors.primary }} />
       </Row>
 

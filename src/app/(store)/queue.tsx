@@ -4,11 +4,11 @@ import { useCallback, useState } from 'react';
 import { Alert, FlatList, RefreshControl, StyleSheet, Vibration, View } from 'react-native';
 
 import { OrderCard } from '@/components/order-bits';
-import { Button, Card, Chip, EmptyState, Loading, Row, Txt } from '@/components/ui';
+import { Card, Chip, EmptyState, IconCircle, Loading, Row, Txt } from '@/components/ui';
 import { NEXT_STATUS, rupees } from '@/lib/format';
 import { useMyStore, useOrders, useOrdersRealtime } from '@/lib/queries';
 import { errorMessage, supabase } from '@/lib/supabase';
-import { Colors, Spacing } from '@/lib/theme';
+import { Colors, Fonts, Spacing } from '@/lib/theme';
 import type { OrderWithDetails } from '@/lib/types';
 
 const alertSound = require('@/assets/sounds/new-order.wav');
@@ -52,6 +52,20 @@ export default function OrderQueueScreen() {
     queryClient.invalidateQueries({ queryKey: ['orders'] });
   }
 
+  const reject = (order: OrderWithDetails) =>
+    Alert.alert('Reject this order?', 'The resident will be notified.', [
+      { text: 'Keep', style: 'cancel' },
+      {
+        text: 'Reject',
+        style: 'destructive',
+        onPress: async () => {
+          const { error } = await supabase.rpc('update_order_status', { p_order: order.id, p_status: 'rejected' });
+          if (error) Alert.alert('Could not update', errorMessage(error));
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+        },
+      },
+    ]);
+
   const list = tab === 'active' ? active : done;
 
   return (
@@ -72,19 +86,25 @@ export default function OrderQueueScreen() {
         <View style={{ gap: Spacing.md }}>
           {!store.data.is_open && (
             <Card style={{ backgroundColor: Colors.dangerSoft }}>
-              <Txt color={Colors.danger} style={{ fontWeight: '600' }}>
+              <Txt color={Colors.danger} style={{ fontFamily: Fonts.medium }}>
                 Your store is closed. Residents can{"'"}t order. Open it from Settings.
               </Txt>
             </Card>
           )}
           <Row style={{ gap: Spacing.md }}>
             <Card style={styles.stat}>
-              <Txt variant="caption">Orders today</Txt>
-              <Txt variant="title">{todays.length}</Txt>
+              <IconCircle icon="receipt" tint="yellow" size={40} />
+              <View>
+                <Txt variant="title">{todays.length}</Txt>
+                <Txt variant="section" style={{ fontSize: 11 }}>Orders today</Txt>
+              </View>
             </Card>
             <Card style={styles.stat}>
-              <Txt variant="caption">Sales today</Txt>
-              <Txt variant="title">{rupees(revenue)}</Txt>
+              <IconCircle icon="cash" tint="green" size={40} />
+              <View>
+                <Txt variant="title">{rupees(revenue)}</Txt>
+                <Txt variant="section" style={{ fontSize: 11 }}>Sales today</Txt>
+              </View>
             </Card>
           </Row>
           <Row style={{ gap: Spacing.sm }}>
@@ -102,23 +122,19 @@ export default function OrderQueueScreen() {
       }
       renderItem={({ item }) => {
         const next = NEXT_STATUS[item.status];
-        return (
-          <View style={{ gap: Spacing.sm }}>
-            <OrderCard order={item} showFlat />
-            {next && (
-              <Button
-                title={next.label}
-                variant={item.status === 'placed' ? 'primary' : 'secondary'}
-                onPress={() => advance(item)}
-              />
-            )}
-          </View>
-        );
+        const actions = [];
+        if (item.status === 'placed') {
+          actions.push({ label: 'Reject', icon: 'close-circle-outline' as const, tone: 'danger' as const, onPress: () => reject(item) });
+        }
+        if (next) {
+          actions.push({ label: next.label, icon: 'checkmark-circle-outline' as const, tone: 'primary' as const, onPress: () => advance(item) });
+        }
+        return <OrderCard order={item} showFlat actions={actions} />;
       }}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  stat: { flex: 1, gap: 2 },
+  stat: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
 });

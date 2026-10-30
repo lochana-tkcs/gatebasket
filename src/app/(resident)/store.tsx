@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useNavigation } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ProductCard } from '@/components/product-card';
-import { Chip, EmptyState, Loading, Row, Txt } from '@/components/ui';
+import { Chip, EmptyState, Gradient, Loading, Row, Txt } from '@/components/ui';
 import { cartSummary, useCart } from '@/lib/cart';
 import { rupees } from '@/lib/format';
 import { useCatalog, useMyStore } from '@/lib/queries';
-import { Colors, Radius, Shadow, Spacing } from '@/lib/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/lib/theme';
 
 export default function StoreScreen() {
   const store = useMyStore();
@@ -19,12 +20,7 @@ export default function StoreScreen() {
 
   const [category, setCategory] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-
-  const navigation = useNavigation();
-  const storeName = store.data?.name;
-  useEffect(() => {
-    if (storeName) navigation.setOptions({ title: storeName });
-  }, [navigation, storeName]);
+  const insets = useSafeAreaInsets();
 
   const products = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -43,7 +39,7 @@ export default function StoreScreen() {
       {!store.data.is_open && (
         <View style={styles.closed}>
           <Ionicons name="moon" size={16} color={Colors.danger} />
-          <Txt color={Colors.danger} style={{ fontWeight: '600' }}>
+          <Txt color={Colors.danger} style={{ fontFamily: Fonts.medium }}>
             Store is closed · Opens {store.data.opening_hours}
           </Txt>
         </View>
@@ -83,21 +79,26 @@ export default function StoreScreen() {
       />
 
       {cart.count > 0 && (
-        <Pressable style={styles.cartBar} onPress={() => router.push('/cart')}>
-          <View>
-            <Txt color="#fff" style={{ fontWeight: '700' }}>
-              {cart.count} item{cart.count === 1 ? '' : 's'} · {rupees(cart.subtotal)}
-            </Txt>
-            <Txt variant="caption" color="#D6F2EE">
-              Delivered to your door
-            </Txt>
-          </View>
-          <Row style={{ gap: 4 }}>
-            <Txt color="#fff" style={{ fontWeight: '700' }}>
-              View cart
-            </Txt>
-            <Ionicons name="chevron-forward" size={18} color="#fff" />
-          </Row>
+        <Pressable style={styles.cartBarWrap} onPress={() => router.push('/cart')}>
+          <Gradient style={[styles.cartBar, { paddingBottom: Spacing.lg + insets.bottom }]}>
+            <Row style={{ gap: Spacing.md }}>
+              <Ionicons name="cart" size={24} color="#fff" />
+              <View>
+                <Txt color="#fff" style={{ fontFamily: Fonts.medium }}>
+                  {cart.count} item{cart.count === 1 ? '' : 's'} · {rupees(cart.subtotal)}
+                </Txt>
+                <Txt variant="caption" color={Colors.headerTextDim}>
+                  Delivered to your door
+                </Txt>
+              </View>
+            </Row>
+            <Row style={{ gap: 4 }}>
+              <Txt color="#fff" style={{ fontFamily: Fonts.medium, fontSize: 16 }}>
+                View cart
+              </Txt>
+              <Ionicons name="chevron-forward" size={18} color="#fff" />
+            </Row>
+          </Gradient>
         </Pressable>
       )}
     </View>
@@ -125,19 +126,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  search: { flex: 1, paddingVertical: Spacing.md, fontSize: 15, color: Colors.text },
+  search: { flex: 1, paddingVertical: Spacing.md, fontSize: 15, fontFamily: Fonts.regular, color: Colors.text },
   chips: { gap: Spacing.sm, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm },
+  cartBarWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   cartBar: {
-    position: 'absolute',
-    left: Spacing.lg,
-    right: Spacing.lg,
-    bottom: Spacing.lg,
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...Shadow,
   },
 });

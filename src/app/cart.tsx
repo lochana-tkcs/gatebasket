@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BillRows } from '@/components/order-bits';
 import { ProductImage, QtyStepper } from '@/components/product-card';
@@ -12,7 +13,7 @@ import { cartSummary, useCart } from '@/lib/cart';
 import { flatLabel, rupees } from '@/lib/format';
 import { useMyStore } from '@/lib/queries';
 import { errorMessage, supabase } from '@/lib/supabase';
-import { Colors, Radius, Spacing } from '@/lib/theme';
+import { Colors, Fonts, Radius, Spacing } from '@/lib/theme';
 import type { PaymentMode } from '@/lib/types';
 
 export default function CartScreen() {
@@ -27,6 +28,7 @@ export default function CartScreen() {
   const [note, setNote] = useState('');
   const [payment, setPayment] = useState<PaymentMode>('upi');
   const [placing, setPlacing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   if (cart.count === 0) {
     return (
@@ -67,7 +69,7 @@ export default function CartScreen() {
         <Card style={{ gap: Spacing.xs }}>
           <Row style={{ gap: Spacing.sm }}>
             <Ionicons name="home" size={18} color={Colors.primary} />
-            <Txt style={{ fontWeight: '700' }}>Deliver to {flatLabel(profile.flat)}</Txt>
+            <Txt style={{ fontFamily: Fonts.medium }}>Deliver to {flatLabel(profile.flat)}</Txt>
           </Row>
           <Txt variant="caption">{profile.society?.name}</Txt>
         </Card>
@@ -77,13 +79,13 @@ export default function CartScreen() {
             <Row key={product.id} style={{ gap: Spacing.md }}>
               <ProductImage uri={product.image_url} size={44} />
               <View style={{ flex: 1 }}>
-                <Txt numberOfLines={1} style={{ fontWeight: '600' }}>
+                <Txt numberOfLines={1} style={{ fontFamily: Fonts.medium }}>
                   {product.name}
                 </Txt>
                 <Txt variant="caption">{product.unit}</Txt>
               </View>
               <QtyStepper qty={qty} onChange={(q) => setQty(product, q)} max={product.stock_qty} />
-              <Txt style={{ width: 60, textAlign: 'right', fontWeight: '600' }}>
+              <Txt style={{ width: 60, textAlign: 'right', fontFamily: Fonts.medium }}>
                 {rupees(Number(product.price) * qty)}
               </Txt>
             </Row>
@@ -91,7 +93,7 @@ export default function CartScreen() {
         </Card>
 
         <Card style={{ gap: Spacing.sm }}>
-          <Txt variant="label">Note for the store</Txt>
+          <Txt variant="section">Note for the store</Txt>
           <TextInput
             value={note}
             onChangeText={setNote}
@@ -103,7 +105,7 @@ export default function CartScreen() {
         </Card>
 
         <Card style={{ gap: Spacing.sm }}>
-          <Txt variant="label">Pay on delivery</Txt>
+          <Txt variant="section">Pay on delivery</Txt>
           <Row style={{ gap: Spacing.sm }}>
             {(['upi', 'cash'] as const).map((mode) => (
               <Button
@@ -123,7 +125,7 @@ export default function CartScreen() {
         </Card>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Spacing.lg + insets.bottom }]}>
         {closed && <Txt color={Colors.danger}>The store is closed right now.</Txt>}
         {!closed && belowMin && (
           <Txt color={Colors.danger}>Add {rupees(minOrder - cart.subtotal)} more to reach the minimum order.</Txt>
@@ -148,6 +150,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     padding: Spacing.sm,
     fontSize: 15,
+    fontFamily: Fonts.regular,
     color: Colors.text,
     textAlignVertical: 'top',
   },
