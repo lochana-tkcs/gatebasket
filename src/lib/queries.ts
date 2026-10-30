@@ -21,6 +21,23 @@ export function useMyStore() {
 }
 
 export function useCatalog(storeId: string | undefined) {
+  const queryClient = useQueryClient();
+  const instance = useId();
+
+  // Refetch when the store changes a product or an order changes stock.
+  useEffect(() => {
+    if (!storeId) return;
+    const channel = supabase
+      .channel(`products-${storeId}-${instance}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `store_id=eq.${storeId}` }, () =>
+        queryClient.invalidateQueries({ queryKey: ['catalog', storeId] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [storeId, instance, queryClient]);
+
   return useQuery({
     queryKey: ['catalog', storeId],
     enabled: !!storeId,

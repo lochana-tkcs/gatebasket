@@ -2,7 +2,7 @@
 // Supabase's auth/storage schemas, then checks RLS and the order RPCs.
 // Usage: npm run test:db
 import { PGlite } from '@electric-sql/pglite';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
@@ -54,7 +54,9 @@ async function productId(name) {
 
 test('setup: migration and seed apply', async () => {
   await db.exec(SUPABASE_SHIM);
-  await db.exec(read('../migrations/0001_init.sql'));
+  for (const f of readdirSync(new URL('../migrations/', import.meta.url)).sort()) {
+    await db.exec(read(`../migrations/${f}`));
+  }
   await db.exec(read('../seed.sql'));
 
   await db.exec(`
@@ -177,4 +179,67 @@ test('cancelling restocks, and accepted orders cannot be cancelled', async () =>
 
 test('admin-only functions are not callable by users', async () => {
   await assert.rejects(as(R1, `select assign_store_owner('+919000000001', $1)`, [STORE]), /permission denied/);
+});
+
+test('retrying place_order with the same client id returns the same order', async () => {
+  const eggs = await productId('Eggs');
+  const items = JSON.stringify([{ product_id: eggs, qty: 2 }]);
+  const key = '20000000-0000-0000-0000-000000000001';
+  const before = (await db.query(`select stock_qty from products where id = $1`, [eggs])).rows[0].stock_qty;
+
+  const a = (await as(R1, `select place_order($1::jsonb, 'cash', null, $2) id`, [items, key])).rows[0].id;
+  const b = (await as(R1, `select place_order($1::jsonb, 'cash', null, $2) id`, [items, key])).rows[0].id;
+  assert.equal(a, b);
+  assert.equal((await db.query(`select count(*)::int n from orders where client_order_id = $1`, [key])).rows[0].n, 1);
+  assert.equal((await db.query(`select stock_qty from products where id = $1`, [eggs])).rows[0].stock_qty, before - 2);
+});
+
+test('selling the last unit makes it unavailable without flipping the owner switch', async () => {
+  const bread = await productId('Brown Bread');
+  const stock = (await db.query(`select stock_qty from products where id = $1`, [bread])).rows[0].stock_qty;
+  const id = (await as(R1, `select place_order($1::jsonb, 'cash') id`, [JSON.stringify([{ product_id: bread, qty: stock }])])).rows[0].id;
+
+  const p = (await db.query(`select in_stock, stock_qty from products where id = $1`, [bread])).rows[0];
+  assert.equal(p.stock_qty, 0);
+  assert.equal(p.in_stock, true);
+  await assert.rejects(
+    as(R1, `select place_order($1::jsonb, 'cash')`, [JSON.stringify([{ product_id: bread, qty: 1 }])]),
+    /out of stock/,
+  );
+
+  // Cancelling puts the stock back, so it can be ordered again.
+  await as(R1, `select cancel_order($1)`, [id]);
+  assert.equal((await db.query(`select stock_qty from products where id = $1`, [bread])).rows[0].stock_qty, stock);
+});
+
+test("restocking keeps an owner's manual out-of-stock switch", async () => {
+  const paneer = await productId('Paneer');
+  const id = (await as(R1, `select place_order($1::jsonb, 'cash') id`, [JSON.stringify([{ product_id: paneer, qty: 1 }])])).rows[0].id;
+  await as(OWNER, `update products set in_stock = false where id = $1`, [paneer]);
+  await as(R1, `select cancel_order($1)`, [id]);
+  const p = (await db.query(`select in_stock from products where id = $1`, [paneer])).rows[0];
+  assert.equal(p.in_stock, false);
+  await as(OWNER, `update products set in_stock = true where id = $1`, [paneer]);
+});
+
+test('orders the store ignores for 15 minutes are auto-cancelled and restocked', async () => {
+  const paneer = await productId('Paneer');
+  const before = (await db.query(`select stock_qty from products where id = $1`, [paneer])).rows[0].stock_qty;
+  const stale = (await as(R1, `select place_order($1::jsonb, 'cash') id`, [JSON.stringify([{ product_id: paneer, qty: 2 }])])).rows[0].id;
+  const fresh = (await as(R1, `select place_order($1::jsonb, 'cash') id`, [JSON.stringify([{ product_id: paneer, qty: 1 }])])).rows[0].id;
+  await db.query(`update orders set created_at = now() - interval '20 minutes' where id = $1`, [stale]);
+
+  assert.equal((await db.query(`select expire_stale_orders() n`)).rows[0].n, 1);
+  const s = (await db.query(`select status, cancel_reason from orders where id = $1`, [stale])).rows[0];
+  assert.equal(s.status, 'cancelled');
+  assert.equal(s.cancel_reason, 'store_timeout');
+  assert.equal((await db.query(`select status from orders where id = $1`, [fresh])).rows[0].status, 'placed');
+  assert.equal((await db.query(`select stock_qty from products where id = $1`, [paneer])).rows[0].stock_qty, before - 1);
+
+  await assert.rejects(as(R1, `select expire_stale_orders()`), /permission denied/);
+});
+
+test('product changes are published to Realtime', async () => {
+  const rows = (await db.query(`select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by 1`)).rows;
+  assert.deepEqual(rows.map((r) => r.tablename), ['orders', 'products']);
 });

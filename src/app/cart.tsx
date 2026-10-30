@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -28,6 +29,8 @@ export default function CartScreen() {
   const [note, setNote] = useState('');
   const [payment, setPayment] = useState<PaymentMode>('upi');
   const [placing, setPlacing] = useState(false);
+  // Same id for every attempt of this checkout; the server returns the existing order on a retry.
+  const [clientOrderId] = useState(() => Crypto.randomUUID());
   const insets = useSafeAreaInsets();
 
   if (cart.count === 0) {
@@ -48,6 +51,7 @@ export default function CartScreen() {
       p_items: items,
       p_payment_mode: payment,
       p_note: note,
+      p_client_id: clientOrderId,
     });
     setPlacing(false);
     if (error) {

@@ -80,6 +80,8 @@ export type Order = {
   out_for_delivery_at: string | null;
   delivered_at: string | null;
   closed_at: string | null;
+  client_order_id: string | null;
+  cancel_reason: 'resident' | 'store_timeout' | null;
 };
 
 /** Order joined with its items, flat and (for the store) the customer. */
@@ -91,5 +93,13 @@ export type OrderWithDetails = Order & {
 
 export const ORDER_SELECT =
   '*, order_items(*), flat:flats(id, block, number), resident:profiles!orders_resident_id_fkey(name, phone)';
+
+/** Owner switch on, and stock left if the store counts it. */
+export function isAvailable(p: Pick<Product, 'in_stock' | 'stock_qty'>): boolean {
+  return p.in_stock && (p.stock_qty == null || p.stock_qty > 0);
+}
+
+/** Minutes the store has to accept an order before it's auto-cancelled (see expire_stale_orders). */
+export const ACCEPT_WINDOW_MINUTES = 15;
 
 export const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'packed', 'out_for_delivery'];

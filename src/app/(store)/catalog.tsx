@@ -10,7 +10,7 @@ import { rupees } from '@/lib/format';
 import { useCatalog, useMyStore } from '@/lib/queries';
 import { errorMessage, supabase } from '@/lib/supabase';
 import { Colors, Fonts, Radius, Shadow, Spacing } from '@/lib/theme';
-import type { Product } from '@/lib/types';
+import { isAvailable, type Product } from '@/lib/types';
 
 export default function CatalogScreen() {
   const store = useMyStore();
@@ -41,7 +41,7 @@ export default function CatalogScreen() {
 
   if (store.isLoading || catalog.isLoading) return <Loading />;
 
-  const outCount = products.filter((p) => !p.in_stock).length;
+  const outCount = products.filter((p) => !isAvailable(p)).length;
 
   return (
     <View style={{ flex: 1 }}>
@@ -68,7 +68,7 @@ export default function CatalogScreen() {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => router.push({ pathname: '/product-edit', params: { id: item.id } })}
-            style={[styles.row, !item.in_stock && { opacity: 0.6 }]}>
+            style={[styles.row, !isAvailable(item) && { opacity: 0.6 }]}>
             <ProductImage uri={item.image_url} size={48} />
             <View style={{ flex: 1 }}>
               <Txt numberOfLines={1} style={{ fontFamily: Fonts.medium }}>
@@ -85,8 +85,8 @@ export default function CatalogScreen() {
                 onValueChange={(v) => toggleStock(item, v)}
                 trackColor={{ true: Colors.primary }}
               />
-              <Txt variant="caption" color={item.in_stock ? Colors.success : Colors.danger}>
-                {item.in_stock ? 'In stock' : 'Out'}
+              <Txt variant="caption" color={isAvailable(item) ? Colors.success : Colors.danger}>
+                {!item.in_stock ? 'Off' : item.stock_qty === 0 ? 'Sold out' : 'In stock'}
               </Txt>
             </View>
           </Pressable>

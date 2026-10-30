@@ -9,6 +9,7 @@ import { Chip, EmptyState, Gradient, Loading, Row, Txt } from '@/components/ui';
 import { cartSummary, useCart } from '@/lib/cart';
 import { rupees } from '@/lib/format';
 import { useCatalog, useMyStore } from '@/lib/queries';
+import { isAvailable } from '@/lib/types';
 import { Colors, Fonts, Radius, Spacing } from '@/lib/theme';
 
 export default function StoreScreen() {
@@ -28,7 +29,7 @@ export default function StoreScreen() {
       .filter((p) => (category ? p.category_id === category : true))
       .filter((p) => (q ? p.name.toLowerCase().includes(q) : true))
       // In-stock items first.
-      .sort((a, b) => Number(b.in_stock) - Number(a.in_stock));
+      .sort((a, b) => Number(isAvailable(b)) - Number(isAvailable(a)));
   }, [catalog.data, category, search]);
 
   if (store.isLoading || catalog.isLoading) return <Loading />;

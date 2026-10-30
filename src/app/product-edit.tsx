@@ -97,7 +97,7 @@ function ProductForm({
         price,
         mrp,
         stock_qty: stockQty,
-        in_stock: inStock && stockQty !== 0,
+        in_stock: inStock,
         image_url,
       };
       const { error } = existing

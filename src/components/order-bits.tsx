@@ -93,10 +93,13 @@ export function StatusTimeline({ order }: { order: Order }) {
     return (
       <Row style={{ gap: Spacing.md }}>
         <StatusIcon status={order.status} size={40} />
-        <View>
+        <View style={{ flex: 1 }}>
           <Txt variant="heading" color={Colors.danger}>
             {STATUS_LABEL[order.status]}
           </Txt>
+          {order.cancel_reason === 'store_timeout' && (
+            <Txt color={Colors.textSecondary}>The store didn&apos;t respond in time, so it was cancelled automatically.</Txt>
+          )}
           <Txt variant="caption">{timeLabel(order.closed_at)}</Txt>
         </View>
       </Row>

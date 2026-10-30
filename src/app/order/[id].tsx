@@ -13,7 +13,7 @@ import { useOrder, useOrdersRealtime } from '@/lib/queries';
 import { useReorder } from '@/lib/reorder';
 import { errorMessage, supabase } from '@/lib/supabase';
 import { Colors, Fonts, Spacing } from '@/lib/theme';
-import type { OrderStatus } from '@/lib/types';
+import { ACCEPT_WINDOW_MINUTES, type OrderStatus } from '@/lib/types';
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -76,6 +76,16 @@ export default function OrderDetailScreen() {
           </Txt>
           <StatusPill status={o.status} />
         </Card>
+
+        {o.status === 'placed' && (
+          <Card style={{ gap: Spacing.sm, backgroundColor: Colors.accentSoft }}>
+            <MetaRow icon="hourglass-outline">
+              {isStore
+                ? `Accept within ${ACCEPT_WINDOW_MINUTES} min of ${timeLabel(o.created_at)} or it's cancelled automatically.`
+                : `Waiting for the store. If it doesn't accept within ${ACCEPT_WINDOW_MINUTES} min, the order is cancelled automatically.`}
+            </MetaRow>
+          </Card>
+        )}
 
         {o.note && (
           <Card style={{ gap: Spacing.sm }}>

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { rupees } from '@/lib/format';
 import { Colors, Fonts, Radius, Shadow, Spacing } from '@/lib/theme';
-import type { Product } from '@/lib/types';
+import { isAvailable, type Product } from '@/lib/types';
 
 import { Gradient, Txt } from './ui';
 
@@ -50,9 +50,10 @@ export function ProductCard({
   qty: number;
   onChangeQty: (qty: number) => void;
 }) {
+  const available = isAvailable(product);
   const discount = product.mrp && product.mrp > product.price ? Math.round((1 - product.price / product.mrp) * 100) : 0;
   return (
-    <View style={[styles.card, !product.in_stock && { opacity: 0.5 }]}>
+    <View style={[styles.card, !available && { opacity: 0.5 }]}>
       <View style={styles.imageWrap}>
         <ProductImage uri={product.image_url} size={96} />
         {discount > 0 && (
@@ -70,7 +71,7 @@ export function ProductCard({
           <Text style={styles.price}>{rupees(product.price)}</Text>
           {discount > 0 && <Text style={styles.mrp}>{rupees(product.mrp)}</Text>}
         </View>
-        {product.in_stock ? (
+        {available ? (
           <QtyStepper qty={qty} onChange={onChangeQty} max={product.stock_qty} />
         ) : (
           <Txt variant="caption" color={Colors.danger}>

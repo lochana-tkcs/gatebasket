@@ -4,7 +4,7 @@ import { Alert } from 'react-native';
 
 import { useCart } from './cart';
 import { errorMessage, supabase } from './supabase';
-import type { OrderWithDetails, Product } from './types';
+import { isAvailable, type OrderWithDetails, type Product } from './types';
 
 /** Put an order's still-available items back in the cart and open it. */
 export function useReorder() {
@@ -21,7 +21,7 @@ export function useReorder() {
       Alert.alert('Error', errorMessage(error));
       return;
     }
-    const available = (data as Product[]).filter((p) => p.in_stock);
+    const available = (data as Product[]).filter(isAvailable);
     if (available.length === 0) {
       Alert.alert('Nothing to reorder', 'These items are out of stock right now.');
       return;

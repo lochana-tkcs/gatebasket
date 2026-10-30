@@ -11,6 +11,7 @@ type OrderRow = {
   flat_id: string;
   status: string;
   total: number;
+  cancel_reason: string | null;
 };
 
 type WebhookPayload = {
@@ -26,6 +27,8 @@ const RESIDENT_MESSAGES: Record<string, string> = {
   delivered: 'Your order was delivered. Enjoy!',
   rejected: 'Sorry, the store could not take your order.',
 };
+
+const TIMEOUT_MESSAGE = "The store didn't respond in time, so your order was cancelled. Nothing was charged.";
 
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
@@ -71,7 +74,8 @@ Deno.serve(async (req) => {
       order.id,
     );
   } else if (payload.type === 'UPDATE' && payload.old_record?.status !== order.status) {
-    const message = RESIDENT_MESSAGES[order.status];
+    const message =
+      order.status === 'cancelled' && order.cancel_reason === 'store_timeout' ? TIMEOUT_MESSAGE : RESIDENT_MESSAGES[order.status];
     if (message) {
       const { data: resident } = await supabase
         .from('profiles')

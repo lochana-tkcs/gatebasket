@@ -26,6 +26,10 @@ Built with **Expo (React Native)** and **Supabase**.
 - Postgres row-level security: residents only see their own society's store and their own orders, and owners only see their own store
 - `place_order` runs as one transaction. It checks that the store is open, checks stock, saves the prices at order time, decrements tracked stock and enforces the minimum order
 - Order status changes go through `update_order_status`, which only allows valid transitions. Cancelled and rejected orders are restocked
+- Retrying a checkout can't create a duplicate order: the app sends a unique checkout id and the server returns the existing order on a repeat
+- Products are locked in a fixed order, so two carts with the same items queue instead of deadlocking
+- Orders the store doesn't accept within 15 minutes are cancelled automatically and restocked (`expire_stale_orders`, run every minute by `pg_cron`)
+- Stock changes stream live to residents, and an owner's manual "out of stock" switch is never overridden by restocking
 - Realtime order updates, and push notifications through an edge function
 
 ## Project layout
@@ -52,7 +56,7 @@ supabase/
 - A free [Supabase](https://supabase.com) project
 
 ### 2. Database
-In the Supabase dashboard **SQL Editor**, run `supabase/migrations/0001_init.sql` and then `supabase/seed.sql`.
+In the Supabase dashboard **SQL Editor**, run each file in `supabase/migrations/` in order (`0001_init.sql`, then `0002_order_safety.sql`), and then `supabase/seed.sql`.
 
 Or, with the CLI:
 ```bash
